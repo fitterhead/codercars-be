@@ -94,6 +94,4 @@ carController.deleteCar = async (req, res, next) => {
   }
 };
 
-
-
 module.exports = carController;
