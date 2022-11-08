@@ -1,4 +1,3 @@
-
 const { sendResponse, AppError } = require("../helpers/utils.js");
 const mongoose = require("mongoose");
 const Car = require("../models/Car");
@@ -19,19 +18,26 @@ carController.createCar = async (req, res, next) => {
   try {
     const updates = req.body;
     if (!updates) throw new AppError(402, "Bad Request", "Create car Error");
+
     const updateKeys = Object.keys(updates);
     const notAllow = updateKeys.filter((el) => !allowUpdate.includes(el));
+
     if (notAllow.length) {
       const exception = new Error(`Update field not allow`);
       exception.statusCode = 401;
       throw exception;
     }
     const created = await Car.create(updates);
+    let objResponse = { ...created._doc };
+
+    delete objResponse.isEnabled;
+    delete objResponse.__v;
+
     sendResponse(
       res,
       200,
       true,
-      { car: created },
+      { car: objResponse },
       null,
       "Create Car Successfully"
     );
@@ -43,18 +49,39 @@ carController.createCar = async (req, res, next) => {
 /*                                 Get all car                                */
 /* -------------------------------------------------------------------------- */
 carController.getCars = async (req, res, next) => {
-  const query = req.query;
-  console.log(query, "query");
-  const filter = {};
+  let { limit, page, where } = req.query;
+  if (!where) {
+    where = {};
+  } else {
+    where = JSON.parse(where);
+  }
+
+  where = {
+    ...where,
+    // isEnabled: true,
+  };
+
+  if (!limit || limit < 0) {
+    limit = 10;
+  } else {
+    limit = parseInt(limit);
+  }
+  if (!page || page < 1) {
+    page = 1;
+  }
+  page = parseInt(page);
+  page = (page - 1) * 10;
+
   try {
-    const listOfFound = await Car.find(query)
-      .limit(10)
-      .skip((query.page - 1) * 10);
+    const listOfFound = await Car.find(where, { isEnabled: false, __v: false })
+      .limit(limit)
+      .skip(page);
+    const count = await Car.count(where);
     sendResponse(
       res,
       200,
       true,
-      { cars: listOfFound, page: 1, total: 1192 },
+      { cars: listOfFound, page, limit: parseInt(limit), total: count },
       null,
       "Get Car List Successfully!"
     );
@@ -98,11 +125,15 @@ carController.editCar = async (req, res, next) => {
 /*                                 Delete Car                                 */
 /* -------------------------------------------------------------------------- */
 carController.deleteCar = async (req, res, next) => {
-  const targetId = null;
-  const options = { new: true };
+  let { id } = req.params;
+  const targetId = id || "";
+  const options = { isEnabled: false };
+  if (!targetId) next();
+
   try {
     //mongoose query
-    const updated = await Car.findByIdAndDelete(targetId, options);
+    const updated = await Car.findByIdAndUpdate(targetId, options);
+
     sendResponse(
       res,
       200,
