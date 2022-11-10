@@ -1,10 +1,12 @@
-const { sendResponse, AppError } =require("./helpers/utils.js")
+require("dotenv").config();
+
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-require("dotenv").config();
 const cors = require("cors");
+
+const { sendResponse, AppError } = require("./helpers/utils.js");
 const indexRouter = require("./routes/index");
 
 // require("dotenv/config");
@@ -28,13 +30,14 @@ mongoose
   .then(() => console.log(`DB connected ${mongoURI}`))
   .catch((err) => console.log(err));
 
-  // app.use("/", indexRouter);
-  app.use("/", indexRouter);
-  // catch 404 and forard to error handler
+// app.use("/", indexRouter);
+app.use("/", indexRouter);
+// catch 404 and forard to error handler
 app.use((req, res, next) => {
   const err = new AppError(404, "Not Found", "Bad Request");
   next(err);
 });
+
 /* Initialize Error Handling */
 app.use((err, req, res, next) => {
   console.log("ERROR", err);

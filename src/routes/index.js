@@ -3,6 +3,7 @@ const { sendResponse, AppError } = require("../helpers/utils.js");
 const express = require("express");
 const router = express.Router();
 
+// TEST
 router.get("/coder_cars/:test", async (req, res, next) => {
   const { test } = req.params;
   try {
@@ -25,6 +26,7 @@ router.get("/coder_cars/:test", async (req, res, next) => {
 });
 
 // CAR
+// /api/v1/....
 const carAPI = require("./car.api");
 router.use("/cars", carAPI);
 
